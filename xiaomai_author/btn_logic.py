@@ -14,8 +14,8 @@ def get_num_of_face_type_from_platform(account, pwd):
     :return: 成功返回：数据, True
               失败返回：None, False
     """
-    server_host = '192.168.12.57'
-    url = 'http://{}:8090/getUserInfo'.format(server_host)
+    server_host = '192.168.11.186'
+    url = 'http://{}:8078/getUserInfo'.format(server_host)
     data = {
         'username': account,
         'password': pwd
