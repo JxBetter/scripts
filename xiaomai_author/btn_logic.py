@@ -14,8 +14,8 @@ def get_num_of_face_type_from_platform(account, pwd):
     :return: 成功返回：数据, True
               失败返回：None, False
     """
-    server_host = '192.168.11.186'
-    url = 'http://{}:8078/getUserInfo'.format(server_host)
+    server_host = 'facecapacity.uni-ubi.com'
+    url = 'http://{}/getUserInfo'.format(server_host)
     data = {
         'username': account,
         'password': pwd
@@ -149,7 +149,6 @@ def refresh_btn(v4, v5, v6, account, pwd):
     :param v4: 照片类型为500的授权数量控件
     :param v5: 照片类型为1000的授权数量控件
     :param v6: 照片类型为2000的授权数量控件
-    :param v7: 照片类型为5000的授权数量控件
     :param account: 账号
     :param pwd: 密码
     :return:
@@ -181,12 +180,6 @@ def auth_btn(ui_global, face_capacity_type):
     :param face_capacity_type: 需要授权的容量数
     :return:
     """
-    print(ui_global['account'].get(), type(ui_global['account'].get()))
-    print(ui_global['pwd'].get(), type(ui_global['pwd'].get()))
-    print(ui_global['ip'].get(), type(ui_global['ip'].get()))
-    print(ui_global['v4'].get(), type(ui_global['v4'].get()))
-    print(ui_global['v5'].get(), type(ui_global['v5'].get()))
-    print(face_capacity_type, type(face_capacity_type))
     if (ui_global['flag']):
         ui_global['flag'] = False
         # 1.从平台获取人脸容量授权数
