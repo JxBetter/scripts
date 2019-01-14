@@ -47,8 +47,11 @@ def get_device_key_and_current_capacity_from_android(ip):
         messagebox.showinfo(message='网络异常请检查网络')
         return None, False
     else:
-        return [json.loads(json.loads(r.text)['data'])['capacity'],
-                json.loads(json.loads(r.text)['data'])['sn']], True
+        if (json.loads(r.text)['success'] is False):
+            messagebox.showinfo(message=json.loads(r.text)['msg'])
+            return None, False
+        return [json.loads(r.text)['data']['capacity'],
+                json.loads(r.text)['data']['sn']], True
 
 
 def check_rest_of_capacity(face_capacity_list, face_capacity_type):
@@ -70,7 +73,7 @@ def create_sign(account, pwd, sn, device_capacity):
     :param account: 账号
     :param pwd: 密码
     :param sn: 设备序列号
-    :param device_capacity: 设备当前的人脸容量
+    :param device_capacity: 需要授权的人脸容量数
     :return:
     """
     timestamp = str(int(time.time() * 1000))
@@ -79,7 +82,7 @@ def create_sign(account, pwd, sn, device_capacity):
     account_pwd_md5 = md5()
 
     account_pwd_md5.update((account + pwd).encode())
-    mdfive.update((account_pwd_md5.hexdigest() + sn + timestamp + device_capacity).encode())
+    mdfive.update((account_pwd_md5.hexdigest() + sn + timestamp + str(device_capacity)).encode())
     return mdfive.hexdigest(), timestamp
 
 
@@ -141,10 +144,12 @@ def get_capacity_btn_main(ui_global):
     t.start()
 
 
-def refresh_btn(v4, v5, account, pwd):
+def refresh_btn(v4, v5, v6, account, pwd):
     """
-    :param v4: 照片类型为3000的授权数量控件
-    :param v5: 照片类型为5000的授权数量控件
+    :param v4: 照片类型为500的授权数量控件
+    :param v5: 照片类型为1000的授权数量控件
+    :param v6: 照片类型为2000的授权数量控件
+    :param v7: 照片类型为5000的授权数量控件
     :param account: 账号
     :param pwd: 密码
     :return:
@@ -154,15 +159,18 @@ def refresh_btn(v4, v5, account, pwd):
         return
     else:
         for ele in data:
-            if (ele['faceCapacityName'] == '5000容量'):
-                v5.set('{}/{}'.format(ele['consumeNum'], ele['allowNum']))
-            elif (ele['faceCapacityName'] == '3000容量'):
+            if (ele['faceCapacityName'] == '1000容量'):
                 v4.set('{}/{}'.format(ele['consumeNum'], ele['allowNum']))
+            elif (ele['faceCapacityName'] == '2000容量'):
+                v5.set('{}/{}'.format(ele['consumeNum'], ele['allowNum']))
+            elif (ele['faceCapacityName'] == '5000容量'):
+                v6.set('{}/{}'.format(ele['consumeNum'], ele['allowNum']))
 
 
 def refresh_btn_main(ui_global):
     t = threading.Thread(target=refresh_btn,
-                         args=[ui_global['v4'], ui_global['v5'], ui_global['account'].get(), ui_global['pwd'].get()])
+                         args=[ui_global['v4'], ui_global['v5'], ui_global['v6'],
+                               ui_global['account'].get(), ui_global['pwd'].get()])
     t.start()
 
 
@@ -198,17 +206,17 @@ def auth_btn(ui_global, face_capacity_type):
             ui_global['flag'] = True
             return
         else:
-            if (face_capacity_type < sn_capacity_data[0]):
+            if (int(face_capacity_type) < int(sn_capacity_data[0])):
                 messagebox.showinfo(message='当前设备人脸量为{}，无法降容授权为{}'.format(sn_capacity_data[0], face_capacity_type))
                 ui_global['flag'] = True
                 return
-            elif (face_capacity_type == sn_capacity_data[0]):
+            elif (int(face_capacity_type) == int(sn_capacity_data[0])):
                 messagebox.showinfo(message='当前设备人脸量为{}，无需重复授权'.format(sn_capacity_data[0]))
                 ui_global['flag'] = True
                 return
         # 3.生成签名
         sign, timestamp = create_sign(ui_global['account'].get(), ui_global['pwd'].get(), sn_capacity_data[1],
-                                      sn_capacity_data[0])
+                                      face_capacity_type)
         # 4.设置设备人脸容量
         f4 = send_capacity_num_2_android(ui_global['ip'].get(), ui_global['account'].get(), ui_global['pwd'].get(),
                                          sn_capacity_data[1], timestamp, face_capacity_type, sign)
@@ -223,10 +231,12 @@ def auth_btn(ui_global, face_capacity_type):
                 return
             else:
                 for ele in data:
-                    if (ele['faceCapacityName'] == '5000容量'):
-                        ui_global['v5'].set('{}/{}'.format(ele['consumeNum'], ele['allowNum']))
-                    elif (ele['faceCapacityName'] == '3000容量'):
+                    if (ele['faceCapacityName'] == '1000容量'):
                         ui_global['v4'].set('{}/{}'.format(ele['consumeNum'], ele['allowNum']))
+                    elif (ele['faceCapacityName'] == '2000容量'):
+                        ui_global['v5'].set('{}/{}'.format(ele['consumeNum'], ele['allowNum']))
+                    elif (ele['faceCapacityName'] == '5000容量'):
+                        ui_global['v6'].set('{}/{}'.format(ele['consumeNum'], ele['allowNum']))
                 messagebox.showinfo(message='设备授权成功，目前人脸库为{}'.format(face_capacity_type))
         ui_global['flag'] = True
     else:
@@ -239,17 +249,6 @@ def auth_btn_main(ui_global, face_capacity_type):
     t.start()
 
 
-def btn_test(ui_global, msg):
-    if (ui_global['flag']):
-        ui_global['flag'] = False
-        time.sleep(3)
-        print('sleep {}'.format(msg))
-        ui_global['flag'] = True
-        print('quit')
-    else:
-        messagebox.showinfo(message='busy')
-
-
 if __name__ == '__main__':
-    r, s = create_sign('gujinxin', 'test1234', '84E0F420533F02FA', '1000')
+    r, s = create_sign('1', '1', '84E0F420533F02FA', '1000')
     print(r, s)
