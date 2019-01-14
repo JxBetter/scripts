@@ -11,7 +11,7 @@ def create_ui():
     """
     root = Tk()
 
-    root.title('Uface照片容量授权工具')
+    root.title('Uface照片容量授权工具V1.0')
     root.geometry('600x350')
     root.resizable(0, 0)
 
