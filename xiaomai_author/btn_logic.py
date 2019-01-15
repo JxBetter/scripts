@@ -21,7 +21,7 @@ def get_num_of_face_type_from_platform(account, pwd):
         'password': pwd
     }
     try:
-        r = requests.post(url, data, timeout=6)
+        r = requests.post(url, data, timeout=3)
     except Exception as e:
         messagebox.showinfo(message='网络异常请检查网络')
         return None, False
@@ -29,7 +29,7 @@ def get_num_of_face_type_from_platform(account, pwd):
         if (json.loads(r.text)['code'] == 'SUCCESS'):
             return json.loads(r.text)['data']['faceCapacityDtoList'], True
         else:
-            messagebox.showinfo(message=json.loads(r.text)['msg'])
+            messagebox.showinfo(message=json.loads(r.text).get('msg', '出现了未知错误~'))
             return None, False
 
 
@@ -42,13 +42,16 @@ def get_device_key_and_current_capacity_from_android(ip):
     """
     url = 'http://{}:8090/getDeviceCapacity'.format(ip)
     try:
-        r = requests.get(url, timeout=6)
+        r = requests.get(url, timeout=3)
     except Exception as e:
         messagebox.showinfo(message='网络异常请检查网络')
         return None, False
     else:
+        if (r.status_code != 200):
+            messagebox.showinfo(message='设备不支持设置或查询人脸容量')
+            return None, False
         if (json.loads(r.text)['success'] is False):
-            messagebox.showinfo(message=json.loads(r.text)['msg'])
+            messagebox.showinfo(message=json.loads(r.text).get('msg', '出现了未知错误~'))
             return None, False
         return [json.loads(r.text)['data']['capacity'],
                 json.loads(r.text)['data']['sn']], True
@@ -119,7 +122,7 @@ def send_capacity_num_2_android(ip, account, pwd, sn, timestamp, face_capacity, 
         return False
     else:
         if (json.loads(r.text)['success'] is False):
-            messagebox.showinfo(message=json.loads(r.text)['msg'])
+            messagebox.showinfo(message=json.loads(r.text).get('msg', '出现了未知错误~'))
             return False
         else:
             return True
@@ -130,7 +133,6 @@ def get_capacity_btn(ip):
     :param ip: 设备ip
     :return:
     """
-    print(ip)
     data, f = get_device_key_and_current_capacity_from_android(ip)
     if (f is False):
         return
